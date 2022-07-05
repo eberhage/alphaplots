@@ -1,5 +1,5 @@
-__version_info__ = ('0','1','1')
-__version__ = '.'.join(__version_info__)
+__version_info__ = (0,1,2)
+__version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
 import os
