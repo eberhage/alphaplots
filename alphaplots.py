@@ -1,6 +1,9 @@
+__version_info__ = ('0','1','1')
+__version__ = '.'.join(__version_info__)
+__author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
+
 import os
 import sys
-import math
 import numpy as np
 from matplotlib import pyplot as plt
 import argparse
@@ -62,7 +65,7 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
 
   ##################################################################
   num_models = len(model_names)
-  dim = math.ceil(math.sqrt(num_models))
+  dim = np.ceil(np.sqrt(num_models)).astype(int)
   plt.figure(figsize=(3 * dim, 3 * dim), dpi=300)
   for n, (model_name, value) in enumerate(pae_plddt_per_model.items()):
     #plt.subplot(1, num_models, n + 1)
@@ -79,12 +82,14 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   plt.savefig(f"{out_dir}/{name+('_' if name else '')}PAE.png")
   ##################################################################
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--input_dir',dest='input_dir',required=True)
-parser.add_argument('--name',dest='name')
-parser.set_defaults(name='')
-parser.add_argument('--output_dir',dest='output_dir')
+parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
+				 Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
+parser.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='relative or absolute path to the input directory (AlphaFold output)')
+parser.add_argument('-o','--output_dir',dest='output_dir',metavar='<output_dir>',help='destination folder where files are generated')
 parser.set_defaults(output_dir='')
+parser.add_argument('-n','--name',dest='name',help='add custom name as prefix to your images')
+parser.set_defaults(name='')
+parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 args = parser.parse_args()
 
 if not os.path.exists(args.input_dir+'/features.pkl'):
