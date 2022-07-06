@@ -1,4 +1,4 @@
-__version_info__ = (1,0,0)
+__version_info__ = (1,0,1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -12,10 +12,12 @@ import pickle
 def get_pae_plddt(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    newname = name.replace(input_dir+'result_','').replace('multimer_v2_pred_','').replace('.pkl','')
+    newname = name.replace(input_dir+'result_','').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
     print(f'Loading {name} as {newname}')
     d = pickle.load(open(name,'rb'))
-    out[newname] = {'plddt': d['plddt'], 'pae':d['predicted_aligned_error']}
+    out[newname] = {'plddt': d['plddt']}
+    if 'predicted_aligned_error' in d:
+      out[newname]['pae'] = d['predicted_aligned_error']
   return out
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
@@ -56,7 +58,8 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   if len(chain_starts) > 1:
     for chain_break in chain_starts[1:]:
       plt.plot([chain_break,chain_break],[0,100],color="black",linewidth=1)
-  plt.legend()
+  if len(pae_plddt_per_model) < 6:
+    plt.legend()
   plt.ylim(0, 100)
   plt.ylabel("Predicted LDDT")
   plt.xlabel("Positions")
@@ -64,22 +67,26 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   ##################################################################
 
   ##################################################################
-  num_models = len(model_names)
-  dim = np.ceil(np.sqrt(num_models)).astype(int)
-  plt.figure(figsize=(3 * dim, 3 * dim), dpi=300)
-  for n, (model_name, value) in enumerate(pae_plddt_per_model.items()):
-    #plt.subplot(1, num_models, n + 1)
-    plt.subplot(dim, dim, n + 1)
-    plt.title(model_name)
-    plt.imshow(value["pae"], label=model_name, cmap="bwr", vmin=0, vmax=30)
-    if len(chain_starts) > 1:
-      for chain_break in chain_starts[1:]:
-        plt.plot([chain_break,chain_break],[0,len(indexes)],color="black",linewidth=1)
-        plt.plot([0,len(indexes)],[chain_break,chain_break],color="black",linewidth=1) 
-    plt.xlim(0, len(indexes))
-    plt.ylim(len(indexes), 0)
-    plt.colorbar()
-  plt.savefig(f"{out_dir}/{name+('_' if name else '')}PAE.png")
+  if 'pae' in pae_plddt_per_model[list(pae_plddt_per_model.keys())[0]]:
+    num_models = len(pae_plddt_per_model)
+    horizontal = np.ceil(np.sqrt(num_models)).astype(int)
+    vertical = np.ceil(num_models/horizontal).astype(int)
+    fig = plt.figure(figsize=(3 * horizontal, 2.5 * vertical), dpi=300)
+    for n, (model_name, value) in enumerate(pae_plddt_per_model.items()):
+      plt.subplot(vertical, horizontal, n + 1)
+      plt.title(model_name)
+      plt.imshow(value["pae"], label=model_name, cmap="bwr", vmin=0, vmax=30)
+      if len(chain_starts) > 1:
+        for chain_break in chain_starts[1:]:
+          plt.plot([chain_break,chain_break],[0,len(indexes)],color="black",linewidth=1)
+          plt.plot([0,len(indexes)],[chain_break,chain_break],color="black",linewidth=1) 
+      plt.xlim(0, len(indexes))
+      plt.ylim(len(indexes), 0)
+      plt.colorbar()
+    fig.tight_layout()
+    plt.savefig(f"{out_dir}/{name+('_' if name else '')}PAE.png")
+  else:
+    print('Unable to plot PAE. Try using "--model_preset=monomer_ptm" for your next Alphafold monomer job.')
   ##################################################################
 
 parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
