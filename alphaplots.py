@@ -1,4 +1,4 @@
-__version_info__ = (0,1,2)
+__version_info__ = (1,0,0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -12,8 +12,8 @@ import pickle
 def get_pae_plddt(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    newname = name.replace(input_dir+'/result_','').replace('multimer_v2_pred_','').replace('.pkl','')
-    print('Loading '+name+' as '+newname)
+    newname = name.replace(input_dir+'result_','').replace('multimer_v2_pred_','').replace('.pkl','')
+    print(f'Loading {name} as {newname}')
     d = pickle.load(open(name,'rb'))
     out[newname] = {'plddt': d['plddt'], 'pae':d['predicted_aligned_error']}
   return out
@@ -84,25 +84,36 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
 
 parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
 				 Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
-parser.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='relative or absolute path to the input directory (AlphaFold output)')
-parser.add_argument('-o','--output_dir',dest='output_dir',metavar='<output_dir>',help='destination folder where files are generated')
-parser.set_defaults(output_dir='')
-parser.add_argument('-n','--name',dest='name',help='add custom name as prefix to your images')
-parser.set_defaults(name='')
+required = parser.add_argument_group('required arguments')
+required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='relative or absolute path to the input directory (AlphaFold output)')
+parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='destination folder where files are generated')
+parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='add custom name as prefix to your images')
+parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='limit the inspected pickles to n models')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
+groups_order = {
+    'positional arguments': 0,
+    'required arguments': 1,
+    'optional arguments': 2
+}
+parser._action_groups.sort(key=lambda g: groups_order[g.title])
 args = parser.parse_args()
 
 if not os.path.exists(args.input_dir+'/features.pkl'):
-  sys.exit('The file "'+args.input_dir+'/features.pkl" is mandatory. Please provide it at this specific location.')
+  sys.exit(f'The file "{args.input_dir}features.pkl" is mandatory. Please provide it at this specific location.')
 else:
   feature_dict = pickle.load(open(f'{args.input_dir}/features.pkl','rb'))
 model_names = []
 for path, currentDirectory, files in os.walk(args.input_dir):
   for file in files:
     if file.startswith('result') and file.endswith('.pkl'):
-      model_names.append(path+'/'+file)
+      model_names.append(path+file)
 model_names.sort()
-print('Found '+str(len(model_names))+' models')
+print(f'Found {str(len(model_names))} models')
+if args.models:
+  print(f'Unpickling the first {args.models} models. Skipping the rest. Please wait.')
+  model_names = model_names[:args.models]
+else:
+  print('Unpickling all models. Please wait.')
 
 pae_plddt_per_model = get_pae_plddt(model_names, args.input_dir)
 generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
