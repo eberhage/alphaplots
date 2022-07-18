@@ -1,4 +1,4 @@
-__version_info__ = (1,0,1)
+__version_info__ = (1,0,2)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -8,16 +8,25 @@ import numpy as np
 from matplotlib import pyplot as plt
 import argparse
 import pickle
+import json
+
+def convert(x):
+  if hasattr(x, "tolist"):  # numpy arrays have this
+    return x.tolist()
+  raise TypeError(x)
 
 def get_pae_plddt(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    newname = name.replace(input_dir+'result_','').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
+    newname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
     print(f'Loading {name} as {newname}')
     d = pickle.load(open(name,'rb'))
     out[newname] = {'plddt': d['plddt']}
     if 'predicted_aligned_error' in d:
       out[newname]['pae'] = d['predicted_aligned_error']
+  print('Generating pae_plddt.json in the input directory for further usage.')
+  with open(os.path.join(input_dir, 'pae_plddt.json'), 'w') as f:
+    json.dump(out, f, indent = 2, default=convert) 
   return out
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
@@ -82,7 +91,8 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
           plt.plot([0,len(indexes)],[chain_break,chain_break],color="black",linewidth=1) 
       plt.xlim(0, len(indexes))
       plt.ylim(len(indexes), 0)
-      plt.colorbar()
+      clb = plt.colorbar()
+      clb.ax.set_title('Å')
     fig.tight_layout()
     plt.savefig(f"{out_dir}/{name+('_' if name else '')}PAE.png")
   else:
@@ -105,15 +115,16 @@ groups_order = {
 parser._action_groups.sort(key=lambda g: groups_order[g.title])
 args = parser.parse_args()
 
-if not os.path.exists(args.input_dir+'/features.pkl'):
-  sys.exit(f'The file "{args.input_dir}features.pkl" is mandatory. Please provide it at this specific location.')
+feature_path = os.path.join(args.input_dir, 'features.pkl')
+if not os.path.exists(feature_path):
+  sys.exit(f'The file "{feature_path}" is mandatory. Please provide it at this specific location.')
 else:
-  feature_dict = pickle.load(open(f'{args.input_dir}/features.pkl','rb'))
+  feature_dict = pickle.load(open(f'{feature_path}','rb'))
 model_names = []
 for path, currentDirectory, files in os.walk(args.input_dir):
   for file in files:
     if file.startswith('result') and file.endswith('.pkl'):
-      model_names.append(path+file)
+      model_names.append(os.path.join(path, file))
 model_names.sort()
 print(f'Found {str(len(model_names))} models')
 if args.models:
