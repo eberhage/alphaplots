@@ -1,4 +1,4 @@
-__version_info__ = (1,1,0)
+__version_info__ = (1,1,1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -23,6 +23,10 @@ def find_pkl_models(input_dir, model_num=0):
         model_names.append(os.path.join(path, file))
   model_names.sort()
   print(f'Found {str(len(model_names))} models')
+  if not model_names:
+    if os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
+      print(f'JSON file found. Try "python3 '+' '.join(sys.argv)+' --jsonload pae_plddt.json"')
+    sys.exit('Exiting')
   if model_num:
     print(f'Unpickling the first {model_num} models. Skipping the rest. Please wait.')
     model_names = model_names[:model_num]
@@ -45,7 +49,7 @@ def get_pae_plddt_from_json(json_path):
   print(f'Reading {json_path}')
   with open(json_path) as handle:
     content = json.loads(handle.read())
-  print('Found '+str(len(content))+' models in the provided json file')
+  print('Found '+str(len(content))+' models in the provided JSON file')
   return content
 
 def generate_json_dump(pae_plddt_per_model, out_dir):
@@ -132,8 +136,8 @@ required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',
 parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='destination folder where files are generated')
 parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='add custom name as prefix to your images')
 parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='limit the inspected pickles to n models')
-parser.add_argument('--jsondump', action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable json file')
-parser.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='json file in the input directory to be read instead of pkl files')
+parser.add_argument('--jsondump', action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable JSON file')
+parser.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
