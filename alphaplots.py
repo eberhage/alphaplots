@@ -1,4 +1,4 @@
-__version_info__ = (1,0,2)
+__version_info__ = (1,1,0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -15,22 +15,48 @@ def convert(x):
     return x.tolist()
   raise TypeError(x)
 
-def get_pae_plddt(model_names, input_dir):
+def find_pkl_models(input_dir, model_num=0):
+  model_names = []
+  for path, currentDirectory, files in os.walk(input_dir):
+    for file in files:
+      if file.startswith('result') and file.endswith('.pkl'):
+        model_names.append(os.path.join(path, file))
+  model_names.sort()
+  print(f'Found {str(len(model_names))} models')
+  if model_num:
+    print(f'Unpickling the first {model_num} models. Skipping the rest. Please wait.')
+    model_names = model_names[:model_num]
+  else:
+    print('Unpickling all models. Please wait.')
+  return model_names
+
+def get_pae_plddt_from_pkl(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    newname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
-    print(f'Loading {name} as {newname}')
+    shortname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
+    print(f'Loading {name}')
     d = pickle.load(open(name,'rb'))
-    out[newname] = {'plddt': d['plddt']}
+    out[name] = {'short_name': shortname, 'plddt': d['plddt']}
     if 'predicted_aligned_error' in d:
-      out[newname]['pae'] = d['predicted_aligned_error']
-  print('Generating pae_plddt.json in the input directory for further usage.')
-  with open(os.path.join(input_dir, 'pae_plddt.json'), 'w') as f:
-    json.dump(out, f, indent = 2, default=convert) 
+      out[name]['pae'] = d['predicted_aligned_error']
   return out
 
+def get_pae_plddt_from_json(json_path):
+  print(f'Reading {json_path}')
+  with open(json_path) as handle:
+    content = json.loads(handle.read())
+  print('Found '+str(len(content))+' models in the provided json file')
+  return content
+
+def generate_json_dump(pae_plddt_per_model, out_dir):
+  if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
+  print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
+  with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
+    json.dump(pae_plddt_per_model, f, indent = 2, default=convert)  
+
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
-  print('Writing files to '+out_dir)
+  print('Generating plots in '+out_dir)
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
   msa = feature_dict['msa']
@@ -63,7 +89,7 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   plt.subplot(1, 2, 2)
   plt.title("Predicted LDDT per position")
   for model_name, value in pae_plddt_per_model.items():
-    plt.plot(value["plddt"], label=model_name)
+    plt.plot(value["plddt"], label=value["short_name"])
   if len(chain_starts) > 1:
     for chain_break in chain_starts[1:]:
       plt.plot([chain_break,chain_break],[0,100],color="black",linewidth=1)
@@ -83,8 +109,8 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
     fig = plt.figure(figsize=(3 * horizontal, 2.5 * vertical), dpi=300)
     for n, (model_name, value) in enumerate(pae_plddt_per_model.items()):
       plt.subplot(vertical, horizontal, n + 1)
-      plt.title(model_name)
-      plt.imshow(value["pae"], label=model_name, cmap="bwr", vmin=0, vmax=30)
+      plt.title(value["short_name"])
+      plt.imshow(value["pae"], label=value["short_name"], cmap="bwr", vmin=0, vmax=30)
       if len(chain_starts) > 1:
         for chain_break in chain_starts[1:]:
           plt.plot([chain_break,chain_break],[0,len(indexes)],color="black",linewidth=1)
@@ -106,6 +132,8 @@ required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',
 parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='destination folder where files are generated')
 parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='add custom name as prefix to your images')
 parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='limit the inspected pickles to n models')
+parser.add_argument('--jsondump', action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable json file')
+parser.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='json file in the input directory to be read instead of pkl files')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
@@ -120,18 +148,18 @@ if not os.path.exists(feature_path):
   sys.exit(f'The file "{feature_path}" is mandatory. Please provide it at this specific location.')
 else:
   feature_dict = pickle.load(open(f'{feature_path}','rb'))
-model_names = []
-for path, currentDirectory, files in os.walk(args.input_dir):
-  for file in files:
-    if file.startswith('result') and file.endswith('.pkl'):
-      model_names.append(os.path.join(path, file))
-model_names.sort()
-print(f'Found {str(len(model_names))} models')
-if args.models:
-  print(f'Unpickling the first {args.models} models. Skipping the rest. Please wait.')
-  model_names = model_names[:args.models]
-else:
-  print('Unpickling all models. Please wait.')
 
-pae_plddt_per_model = get_pae_plddt(model_names, args.input_dir)
-generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
+if args.json:
+  json_path = os.path.join(args.input_dir, args.json)
+  if not os.path.exists(json_path):
+    sys.exit(f'The file "{json_path}" is mandatory. Please provide it at this specific location.')
+  else:
+    pae_plddt_per_model = get_pae_plddt_from_json(json_path)
+else:
+  model_pkls = find_pkl_models(args.input_dir, args.models)
+  pae_plddt_per_model = get_pae_plddt_from_pkl(model_pkls, args.input_dir)
+
+if args.jsondump:
+  generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
+else:
+  generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
