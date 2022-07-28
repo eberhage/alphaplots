@@ -1,4 +1,4 @@
-__version_info__ = (1,1,1)
+__version_info__ = (1,1,2)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -16,11 +16,7 @@ def convert(x):
   raise TypeError(x)
 
 def find_pkl_models(input_dir, model_num=0):
-  model_names = []
-  for path, currentDirectory, files in os.walk(input_dir):
-    for file in files:
-      if file.startswith('result') and file.endswith('.pkl'):
-        model_names.append(os.path.join(path, file))
+  model_names = [entry.path for entry in os.scandir(input_dir) if entry.is_file() and entry.name.startswith('result') and entry.name.endswith('.pkl')]
   model_names.sort()
   print(f'Found {str(len(model_names))} models')
   if not model_names:
