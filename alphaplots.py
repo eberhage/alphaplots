@@ -1,11 +1,15 @@
-__version_info__ = (1,1,2)
+__version_info__ = (1,1,3)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
 import os
 import sys
+try:
+  from matplotlib import pyplot as plt
+except ModuleNotFoundError:
+  print('Module "matplotlib" is not installed.')
+  sys.exit('Please try "python3 -m pip install matplotlib".')
 import numpy as np
-from matplotlib import pyplot as plt
 import argparse
 import pickle
 import json
@@ -53,7 +57,7 @@ def generate_json_dump(pae_plddt_per_model, out_dir):
     os.makedirs(out_dir)
   print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
-    json.dump(pae_plddt_per_model, f, indent = 2, default=convert)  
+    json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)  
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   print('Generating plots in '+out_dir)
