@@ -1,4 +1,4 @@
-__version_info__ = (1,1,3)
+__version_info__ = (1,2,0)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -57,7 +57,16 @@ def generate_json_dump(pae_plddt_per_model, out_dir):
     os.makedirs(out_dir)
   print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
-    json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)  
+    json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)
+
+def add_ranking(pae_plddt_per_model, ranking_path):
+  with open(ranking_path) as handle:
+    ranking = json.loads(handle.read())
+  for model in pae_plddt_per_model.keys():
+    name = os.path.basename(model).replace('result_','').replace('.pkl','')
+    pae_plddt_per_model[model]["iptm+ptm"] = ranking["iptm+ptm"][name]
+    pae_plddt_per_model[model]["rank"] = ranking["order"].index(name)
+  return pae_plddt_per_model
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   print('Generating plots in '+out_dir)
@@ -113,7 +122,10 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
     fig = plt.figure(figsize=(3 * horizontal, 2.5 * vertical), dpi=300)
     for n, (model_name, value) in enumerate(pae_plddt_per_model.items()):
       plt.subplot(vertical, horizontal, n + 1)
-      plt.title(value["short_name"])
+      if "rank" in value:
+        plt.title(value["short_name"]+' (ranked_'+str(value["rank"])+')')
+      else:
+        plt.title(value["short_name"])
       plt.imshow(value["pae"], label=value["short_name"], cmap="bwr", vmin=0, vmax=30)
       if len(chain_starts) > 1:
         for chain_break in chain_starts[1:]:
@@ -162,6 +174,18 @@ if args.json:
 else:
   model_pkls = find_pkl_models(args.input_dir, args.models)
   pae_plddt_per_model = get_pae_plddt_from_pkl(model_pkls, args.input_dir)
+  
+ranking_path = os.path.join(args.input_dir, 'ranking_debug.json')
+if os.path.exists(ranking_path):
+  print(f'Adding ranking information from "{ranking_path}".')
+  pae_plddt_per_model = add_ranking(pae_plddt_per_model, ranking_path)
+elif args.json:
+  if "rank" in pae_plddt_per_model[next(iter(pae_plddt_per_model))]:
+    print(f'The file "{ranking_path}" was not found. Using ranking information from provided JSON.')
+  else:
+     print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Plots will not contain ranking information.')
+else:
+  print(f'The file "{ranking_path}" was not found. Plots will not contain ranking information.')
 
 if args.jsondump:
   generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
