@@ -183,7 +183,7 @@ elif args.json:
   if "rank" in pae_plddt_per_model[next(iter(pae_plddt_per_model))]:
     print(f'The file "{ranking_path}" was not found. Using ranking information from provided JSON.')
   else:
-     print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Plots will not contain ranking information.')
+    print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Plots will not contain ranking information.')
 else:
   print(f'The file "{ranking_path}" was not found. Plots will not contain ranking information.')
 
