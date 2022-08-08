@@ -68,6 +68,18 @@ def add_ranking(pae_plddt_per_model, ranking_path):
     pae_plddt_per_model[model]["rank"] = ranking["order"].index(name)
   return pae_plddt_per_model
 
+def remove_pkl(pkl_list, preceding_dump, input_dir):
+  print('The following files will be deleted:', end='\n\n')
+  print(*pkl_list, sep = '\n', end='\n\n')
+  if not preceding_dump and not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
+    print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file \
+    "pae_plddt.json" found in the input directory. If you renamed or moved it, you can ignore this warning.
+  interaction = input("Do you want to continue? (Y/N)")
+    if any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
+      print ('Removing '+str(len(pkl_list))+' files.')
+    else:
+      print ('Aborting.')    
+
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   print('Generating plots in '+out_dir)
   if not os.path.exists(out_dir):
@@ -144,12 +156,14 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
 parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
 				 Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
 required = parser.add_argument_group('required arguments')
+rmpklgroup = parser.add_mutually_exclusive_group()
 required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='relative or absolute path to the input directory (AlphaFold output)')
 parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='destination folder where files are generated')
 parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='add custom name as prefix to your images')
 parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='limit the inspected pickles to n models')
-parser.add_argument('--jsondump', action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable JSON file')
-parser.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
+parser.add_argument('--jsondump',action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable JSON file')
+rmpklgroup.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
+rmpklgroup.add_argument('--rmpkl',action='store_true',help='Remove all model pkl files. Cannot be used with jsonload.')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
@@ -191,3 +205,6 @@ if args.jsondump:
   generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
 else:
   generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
+
+if args.rmpkl:
+  remove_pkl(model_pkls, args.jsondump, args.input_dir)
