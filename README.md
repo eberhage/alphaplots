@@ -34,9 +34,13 @@ To generate a json file containing the information of pLDDT and PAE
 ```
 --jsondump
 ```
-To read a json file in the input directory instead of the pkl files (usually faster)
+To read a json file in the input directory (or relative to it) instead of the pkl files (usually faster)
 ```
 --jsonload <file>
+```
+To auto-delete all model pkl files (not features.pkl) in the input directory. Should only be used after or in combination with jsondump
+```
+--rmpkl
 ```
 Version
 ```
