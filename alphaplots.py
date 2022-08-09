@@ -166,13 +166,14 @@ parser = argparse.ArgumentParser(description='This script will generate plots co
 				 Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
 required = parser.add_argument_group('required arguments')
 rmpklgroup = parser.add_mutually_exclusive_group()
-required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='relative or absolute path to the input directory (AlphaFold output)')
-parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='destination folder where files are generated')
-parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='add custom name as prefix to your images')
-parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='limit the inspected pickles to n models')
-parser.add_argument('--jsondump',action='store_true',help='skip the plotting and dump all relevant PAE and pLDDT information as human readable JSON file')
+required.add_argument('-i','--input_dir',dest='input_dir',metavar='<input_dir>',required=True,help='Relative or absolute path to the input directory (AlphaFold output)')
+parser.add_argument('-o','--output_dir',dest='output_dir',default='',metavar='<output_dir>',help='Destination folder where files are generated')
+parser.add_argument('-n','--name',dest='name',default='',metavar='<prefix>',help='Add custom name as prefix to your plots')
+parser.add_argument('-m','--models',dest='models',default=0,type=int,metavar='<n>',help='Limit the inspected pickles to n models')
+parser.add_argument('--jsondump',action='store_true',help='Dump all relevant PAE and pLDDT information as human readable JSON file')
 rmpklgroup.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
 rmpklgroup.add_argument('--rmpkl',action='store_true',help='Remove all model pkl files. Cannot be used with jsonload.')
+parser.add_argument('--noplot',action='store_true',help='Skip the plotting. Only makes sense with jsondump.')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
@@ -212,6 +213,9 @@ else:
 
 if args.jsondump:
   generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
+  
+if args.noplot:
+  print('No plots are generated.')
 else:
   generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
 
