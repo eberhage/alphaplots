@@ -55,6 +55,12 @@ def get_pae_plddt_from_json(json_path):
 def generate_json_dump(pae_plddt_per_model, out_dir):
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
+  elif os.path.exists(os.path.join(out_dir, 'pae_plddt.json')):
+    print('The file "pae_plddt.json" already exists. It will be overwritten.')
+    interaction = input('Do you want to continue? (Y/N)')
+    if not any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
+      print ('Aborting JSON dump.')
+      return
   print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
     json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)
