@@ -22,11 +22,11 @@ def convert(x):
 def find_pkl_models(input_dir, model_num=0):
   model_names = [entry.path for entry in os.scandir(input_dir) if entry.is_file() and entry.name.startswith('result') and entry.name.endswith('.pkl')]
   model_names.sort()
-  print(f'Found {str(len(model_names))} models')
+  print(f'Found {str(len(model_names))} models.')
   if not model_names:
     if os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
-      print(f'JSON file found. Try "python3 '+' '.join(sys.argv)+' --jsonload pae_plddt.json"')
-    sys.exit('Exiting')
+      print(f'JSON file found. Try "python3 '+' '.join(sys.argv)+' --jsonload pae_plddt.json".')
+    sys.exit('No models found. Aborting.')
   if model_num:
     print(f'Unpickling the first {model_num} models. Skipping the rest. Please wait.')
     model_names = model_names[:model_num]
@@ -60,10 +60,11 @@ def generate_json_dump(pae_plddt_per_model, out_dir):
     interaction = input('Do you want to continue? (Y/N)')
     if not any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
       print ('Aborting JSON dump.')
-      return
+      return False
   print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
     json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)
+  return True
 
 def add_ranking(pae_plddt_per_model, ranking_path):
   with open(ranking_path) as handle:
@@ -192,7 +193,7 @@ else:
 if args.json:
   json_path = os.path.join(args.input_dir, args.json)
   if not os.path.exists(json_path):
-    sys.exit(f'The file "{json_path}" is mandatory. Please provide it at this specific location.')
+    sys.exit(f'The file "{json_path}" was not found. Aborting.')
   else:
     pae_plddt_per_model = get_pae_plddt_from_json(json_path)
 else:
@@ -207,12 +208,13 @@ elif args.json:
   if "rank" in pae_plddt_per_model[next(iter(pae_plddt_per_model))]:
     print(f'The file "{ranking_path}" was not found. Using ranking information from provided JSON.')
   else:
-    print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Plots will not contain ranking information.')
+    print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Output will not contain ranking information.')
 else:
-  print(f'The file "{ranking_path}" was not found. Plots will not contain ranking information.')
+  print(f'The file "{ranking_path}" was not found. Output will not contain ranking information.')
 
+successful_dump = False
 if args.jsondump:
-  generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
+  successful_dump = generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
   
 if args.noplot:
   print('No plots are generated.')
@@ -220,4 +222,4 @@ else:
   generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
 
 if args.rmpkl:
-  remove_pkl(model_pkls, args.jsondump, args.input_dir)
+  remove_pkl(model_pkls, successful_dump, args.input_dir)
