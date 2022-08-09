@@ -1,4 +1,4 @@
-__version_info__ = (1,2,0)
+__version_info__ = (1,2,1)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -73,12 +73,15 @@ def remove_pkl(pkl_list, preceding_dump, input_dir):
   print(*pkl_list, sep = '\n', end='\n\n')
   if not preceding_dump and not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
     print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file \
-    "pae_plddt.json" found in the input directory. If you renamed or moved it, you can ignore this warning.
-  interaction = input("Do you want to continue? (Y/N)")
-    if any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
-      print ('Removing '+str(len(pkl_list))+' files.')
-    else:
-      print ('Aborting.')    
+    "pae_plddt.json" found in the input directory. If you renamed or moved it, you can ignore this warning.')
+  interaction = input('Do you want to continue? (Y/N)')
+  if any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
+    print ('Removing '+str(len(pkl_list))+' files.')
+    for path in pkl_list:
+      os.remove(path)
+    print ('Done.')
+  else:
+    print ('Aborting deletion.')
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
   print('Generating plots in '+out_dir)
