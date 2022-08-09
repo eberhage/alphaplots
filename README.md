@@ -1,9 +1,14 @@
 # alphaplots.py
 This script will scan a folder and use the Pickle (.pkl) files of an AlphaFold output to generate the MSA, the per-AA plDDT distribution and (for each model) a predicted alignment error (PAE) plot.
 
-## Usage
+## Example Usage
+Make plots from Pickle files. That's it.
 ```
 python3 alphaplots.py -i /path/to/alphafold/result/output/folder
+```
+Make plots from Pickle files. Make JSON from Pickle files. Delete Pickle files.
+```
+python3 alphaplots.py -i /path/to/alphafold/result/output/folder --jsondump --rmpkl
 ```
 ## Parameters
 ### Required
@@ -41,6 +46,10 @@ To read a json file in the input directory (or relative to it) instead of the pk
 To auto-delete all model pkl files (not features.pkl) in the input directory. Should only be used after or in combination with jsondump
 ```
 --rmpkl
+```
+To skip the plotting alltogether. Only makes sense with jsondump.
+```
+--noplot
 ```
 Version
 ```
