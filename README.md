@@ -51,6 +51,10 @@ To skip the plotting alltogether. Only makes sense with jsondump.
 ```
 --noplot
 ```
+To auto-answer every question with "yes". Use with caution. For experienced users only.
+```
+--yes
+```
 Version
 ```
 -v

@@ -52,12 +52,12 @@ def get_pae_plddt_from_json(json_path):
   print('Found '+str(len(content))+' models in the provided JSON file')
   return content
 
-def generate_json_dump(pae_plddt_per_model, out_dir):
+def generate_json_dump(pae_plddt_per_model, out_dir, yes):
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-  elif os.path.exists(os.path.join(out_dir, 'pae_plddt.json')):
+  elif not yes and os.path.exists(os.path.join(out_dir, 'pae_plddt.json')):
     print('The file "pae_plddt.json" already exists. It will be overwritten.')
-    interaction = input('Do you want to continue? (Y/N)')
+    interaction = input('Do you want to continue? [y/N]:')
     if not any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
       print ('Aborting JSON dump.')
       return False
@@ -75,18 +75,18 @@ def add_ranking(pae_plddt_per_model, ranking_path):
     pae_plddt_per_model[model]["rank"] = ranking["order"].index(name)
   return pae_plddt_per_model
 
-def remove_pkl(pkl_list, preceding_dump, input_dir):
-  print('The following files will be deleted:', end='\n\n')
-  print(*pkl_list, sep = '\n', end='\n\n')
-  if not preceding_dump and not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
-    print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file \
-    "pae_plddt.json" found in the input directory. If you renamed or moved it, you can ignore this warning.')
-  interaction = input('Do you want to continue? (Y/N)')
-  if any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
+def remove_pkl(pkl_list, input_dir, yes):
+  if not yes:
+    print('The following files will be deleted:', end='\n\n')
+    print(*pkl_list, sep = '\n', end='\n\n')
+    if not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
+      print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file "pae_plddt.json" found in the input directory.')
+      print('If you renamed or moved it, you can ignore this warning.')
+    interaction = input('Do you want to continue? [y/N]:')
+  if yes or any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
     print ('Removing '+str(len(pkl_list))+' files.')
     for path in pkl_list:
       os.remove(path)
-    print ('Done.')
   else:
     print ('Aborting deletion.')
 
@@ -175,6 +175,7 @@ parser.add_argument('--jsondump',action='store_true',help='Dump all relevant PAE
 rmpklgroup.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
 rmpklgroup.add_argument('--rmpkl',action='store_true',help='Remove all model pkl files. Cannot be used with jsonload.')
 parser.add_argument('--noplot',action='store_true',help='Skip the plotting. Only makes sense with jsondump.')
+parser.add_argument('--yes',action='store_true',help='Auto-answer every question with "Yes". Use with caution.')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
@@ -212,9 +213,8 @@ elif args.json:
 else:
   print(f'The file "{ranking_path}" was not found. Output will not contain ranking information.')
 
-successful_dump = False
 if args.jsondump:
-  successful_dump = generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir)
+  generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir, args.yes)
   
 if args.noplot:
   print('No plots are generated.')
@@ -222,4 +222,4 @@ else:
   generate_output_images(feature_dict, args.output_dir if args.output_dir else args.input_dir, args.name, pae_plddt_per_model)
 
 if args.rmpkl:
-  remove_pkl(model_pkls, successful_dump, args.input_dir)
+  remove_pkl(model_pkls, args.input_dir, args.yes)
