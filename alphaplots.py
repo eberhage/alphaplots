@@ -185,6 +185,9 @@ groups_order = {
 parser._action_groups.sort(key=lambda g: groups_order[g.title])
 args = parser.parse_args()
 
+if not os.path.exists(args.input_dir):
+  sys.exit(f'"{os.path.abspath(args.input_dir)}" was not found.')
+
 feature_path = os.path.join(args.input_dir, 'features.pkl')
 if not os.path.exists(feature_path):
   sys.exit(f'The file "{feature_path}" is mandatory. Please provide it at this specific location.')
