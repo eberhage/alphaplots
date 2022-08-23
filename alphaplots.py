@@ -1,4 +1,4 @@
-__version_info__ = (1,2,1)
+__version_info__ = (1,2,2)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -7,8 +7,8 @@ import sys
 try:
   from matplotlib import pyplot as plt
 except ModuleNotFoundError:
-  print('Module "matplotlib" is not installed.')
-  sys.exit('Please try "python3 -m pip install matplotlib".')
+  print('Module »matplotlib« is not installed.')
+  sys.exit('Please try »python3 -m pip install matplotlib«.')
 import numpy as np
 import argparse
 import pickle
@@ -25,7 +25,7 @@ def find_pkl_models(input_dir, model_num=0):
   print(f'Found {str(len(model_names))} models.')
   if not model_names:
     if os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
-      print(f'JSON file found. Try "python3 '+' '.join(sys.argv)+' --jsonload pae_plddt.json".')
+      print('JSON file found. Try appeding »--jsonload pae_plddt.json«. See »--help« for further advice.')
     sys.exit('No models found. Aborting.')
   if model_num:
     print(f'Unpickling the first {model_num} models. Skipping the rest. Please wait.')
@@ -38,30 +38,34 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
     shortname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
-    print(f'Loading {name}')
-    d = pickle.load(open(name,'rb'))
+    print(f'Loading »{name}«.')
+    try:
+      d = pickle.load(open(name,'rb'))
+    except:
+      print(f'Encountered error while loading »{name}«. Maybe it is unfinished. Skipping.')
+      continue
     out[name] = {'short_name': shortname, 'plddt': d['plddt']}
     if 'predicted_aligned_error' in d:
       out[name]['pae'] = d['predicted_aligned_error']
   return out
 
 def get_pae_plddt_from_json(json_path):
-  print(f'Reading {json_path}')
+  print(f'Reading »{json_path}«.')
   with open(json_path) as handle:
     content = json.loads(handle.read())
-  print('Found '+str(len(content))+' models in the provided JSON file')
+  print(f'Found {str(len(content))} models in the provided JSON file.')
   return content
 
 def generate_json_dump(pae_plddt_per_model, out_dir, yes):
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
   elif not yes and os.path.exists(os.path.join(out_dir, 'pae_plddt.json')):
-    print('The file "pae_plddt.json" already exists. It will be overwritten.')
+    print('The file »pae_plddt.json« already exists. It will be overwritten.')
     interaction = input('Do you want to continue? [y/N]:')
     if not any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
       print ('Aborting JSON dump.')
       return False
-  print('Generating pae_plddt.json in the output directory for further usage. Remember to also keep features.pkl.')
+  print('Generating »pae_plddt.json« in the output directory for further usage. Remember to also keep »features.pkl«.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
     json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)
   return True
@@ -80,7 +84,7 @@ def remove_pkl(pkl_list, input_dir, yes):
     print('The following files will be deleted:', end='\n\n')
     print(*pkl_list, sep = '\n', end='\n\n')
     if not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
-      print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file "pae_plddt.json" found in the input directory.')
+      print('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file »pae_plddt.json« found in the input directory.')
       print('If you renamed or moved it, you can ignore this warning.')
     interaction = input('Do you want to continue? [y/N]:')
   if yes or any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
@@ -91,7 +95,7 @@ def remove_pkl(pkl_list, input_dir, yes):
     print ('Aborting deletion.')
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
-  print('Generating plots in '+out_dir)
+  print(f'Generating plots in »{out_dir}.«')
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
   msa = feature_dict['msa']
@@ -160,7 +164,7 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
     fig.tight_layout()
     plt.savefig(f"{out_dir}/{name+('_' if name else '')}PAE.png")
   else:
-    print('Unable to plot PAE. Try using "--model_preset=monomer_ptm" for your next Alphafold monomer job.')
+    print('Unable to plot PAE. Try using »--model_preset=monomer_ptm« for your next Alphafold monomer job.')
   ##################################################################
 
 parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
@@ -175,7 +179,7 @@ parser.add_argument('--jsondump',action='store_true',help='Dump all relevant PAE
 rmpklgroup.add_argument('--jsonload',dest='json',default='',metavar='<file>',help='JSON file in the input directory to be read instead of pkl files')
 rmpklgroup.add_argument('--rmpkl',action='store_true',help='Remove all model pkl files. Cannot be used with jsonload.')
 parser.add_argument('--noplot',action='store_true',help='Skip the plotting. Only makes sense with jsondump.')
-parser.add_argument('--yes',action='store_true',help='Auto-answer every question with "Yes". Use with caution.')
+parser.add_argument('--yes',action='store_true',help='Auto-answer every question with »Yes«. Use with caution.')
 parser.add_argument('-v', '--version', action='version', version='%(prog)s ('+__version__+') '+' by '+__author__)
 groups_order = {
     'positional arguments': 0,
@@ -186,18 +190,18 @@ parser._action_groups.sort(key=lambda g: groups_order[g.title])
 args = parser.parse_args()
 
 if not os.path.exists(args.input_dir):
-  sys.exit(f'"{os.path.abspath(args.input_dir)}" was not found.')
+  sys.exit(f'»{os.path.abspath(args.input_dir)}« was not found.')
 
 feature_path = os.path.join(args.input_dir, 'features.pkl')
 if not os.path.exists(feature_path):
-  sys.exit(f'The file "{feature_path}" is mandatory. Please provide it at this specific location.')
+  sys.exit(f'The file »{feature_path}« is mandatory. Please provide it at this specific location.')
 else:
   feature_dict = pickle.load(open(f'{feature_path}','rb'))
 
 if args.json:
   json_path = os.path.join(args.input_dir, args.json)
   if not os.path.exists(json_path):
-    sys.exit(f'The file "{json_path}" was not found. Aborting.')
+    sys.exit(f'The file »{json_path}« was not found. Aborting.')
   else:
     pae_plddt_per_model = get_pae_plddt_from_json(json_path)
 else:
@@ -206,15 +210,15 @@ else:
   
 ranking_path = os.path.join(args.input_dir, 'ranking_debug.json')
 if os.path.exists(ranking_path):
-  print(f'Adding ranking information from "{ranking_path}".')
+  print(f'Adding ranking information from »{ranking_path}«.')
   pae_plddt_per_model = add_ranking(pae_plddt_per_model, ranking_path)
 elif args.json:
   if "rank" in pae_plddt_per_model[next(iter(pae_plddt_per_model))]:
-    print(f'The file "{ranking_path}" was not found. Using ranking information from provided JSON.')
+    print(f'The file »{ranking_path}« was not found. Using ranking information from provided JSON.')
   else:
-    print(f'The file "{ranking_path}" was not found. There is also no ranking information in the provided JSON. Output will not contain ranking information.')
+    print(f'The file »{ranking_path}« was not found. There is also no ranking information in the provided JSON. Output will not contain ranking information.')
 else:
-  print(f'The file "{ranking_path}" was not found. Output will not contain ranking information.')
+  print(f'The file »{ranking_path}« was not found. Output will not contain ranking information.')
 
 if args.jsondump:
   generate_json_dump(pae_plddt_per_model, args.output_dir if args.output_dir else args.input_dir, args.yes)
