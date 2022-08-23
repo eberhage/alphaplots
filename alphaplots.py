@@ -88,7 +88,7 @@ def remove_pkl(pkl_list, input_dir, yes):
       print('If you renamed or moved it, you can ignore this warning.')
     interaction = input('Do you want to continue? [y/N]:')
   if yes or any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
-    print ('Removing '+str(len(pkl_list))+' files.')
+    print (f'Removing {str(len(pkl_list))} files.')
     for path in pkl_list:
       os.remove(path)
   else:
