@@ -37,7 +37,11 @@ def find_pkl_models(input_dir, model_num=0):
 def get_pae_plddt_from_pkl(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    shortname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
+    shortname = (name.replace(os.path.join(input_dir, 'result_'),'')
+                     .replace('multimer_v2_','')
+                     .replace('ptm_','')
+                     .replace('pred_','')
+                     .replace('.pkl',''))
     print(f'Loading »{name}«.')
     try:
       d = pickle.load(open(name,'rb'))
