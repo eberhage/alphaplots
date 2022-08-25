@@ -16,7 +16,7 @@ import json
 
 def convert(x):
   if hasattr(x, "tolist"):  # numpy arrays have this
-    return x.tolist()
+    return np.round(x, 2).tolist()
   raise TypeError(x)
 
 def find_pkl_models(input_dir, model_num=0):
