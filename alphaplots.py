@@ -16,7 +16,10 @@ import json
 
 def convert(x):
   if hasattr(x, "tolist"):  # numpy arrays have this
-    return np.round(x, 2).tolist()
+    if x.dtype == np.float32:
+      return np.round(x.astype(np.float64),2).tolist() # need to convert here because np.round doesnt like float32
+    else:
+      return np.round(x,2).tolist()
   raise TypeError(x)
 
 def find_pkl_models(input_dir, model_num=0):
