@@ -1,4 +1,4 @@
-__version_info__ = (1,2,2)
+__version_info__ = (1,2,3)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -37,7 +37,11 @@ def find_pkl_models(input_dir, model_num=0):
 def get_pae_plddt_from_pkl(model_names, input_dir):
   out = {}
   for i,name in enumerate(model_names):
-    shortname = name.replace(os.path.join(input_dir, 'result_'),'').replace('multimer_v2_pred_','').replace('pred_','').replace('.pkl','')
+    shortname = (name.replace(os.path.join(input_dir, 'result_'),'')
+                     .replace('multimer_v2_','')
+                     .replace('ptm_','')
+                     .replace('pred_','')
+                     .replace('.pkl',''))
     print(f'Loading »{name}«.')
     try:
       d = pickle.load(open(name,'rb'))
@@ -75,7 +79,10 @@ def add_ranking(pae_plddt_per_model, ranking_path):
     ranking = json.loads(handle.read())
   for model in pae_plddt_per_model.keys():
     name = os.path.basename(model).replace('result_','').replace('.pkl','')
-    pae_plddt_per_model[model]["iptm+ptm"] = ranking["iptm+ptm"][name]
+    if "plddts" in ranking:
+      pae_plddt_per_model[model]["plddts"] = ranking["plddts"][name]
+    elif "iptm+ptm" in ranking:
+      pae_plddt_per_model[model]["iptm+ptm"] = ranking["iptm+ptm"][name]
     pae_plddt_per_model[model]["rank"] = ranking["order"].index(name)
   return pae_plddt_per_model
 
