@@ -1,4 +1,4 @@
-__version_info__ = (1,2,3)
+__version_info__ = (1,2,4)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -17,9 +17,9 @@ import json
 def convert(x):
   if hasattr(x, "tolist"):  # numpy arrays have this
     if x.dtype == np.float32:
-      return np.round(x.astype(np.float64),2).tolist() # need to convert here because np.round doesnt like float32
+      return np.round(x.astype(np.float64),1).tolist() # need to convert here because np.round doesnt like float32
     else:
-      return np.round(x,2).tolist()
+      return np.round(x,1).tolist()
   raise TypeError(x)
 
 def find_pkl_models(input_dir, model_num=0):
@@ -54,14 +54,14 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
     out[name] = {'short_name': shortname, 'plddt': d['plddt']}
     if 'predicted_aligned_error' in d:
       out[name]['pae'] = d['predicted_aligned_error']
-  return out
+  return out if out else sys.exit('No valid model was found. Aborting.')
 
 def get_pae_plddt_from_json(json_path):
   print(f'Reading »{json_path}«.')
   with open(json_path) as handle:
     content = json.loads(handle.read())
   print(f'Found {str(len(content))} models in the provided JSON file.')
-  return content
+  return content if content else sys.exit('No valid model was found. Aborting.')
 
 def generate_json_dump(pae_plddt_per_model, out_dir, yes):
   if not os.path.exists(out_dir):
@@ -71,11 +71,10 @@ def generate_json_dump(pae_plddt_per_model, out_dir, yes):
     interaction = input('Do you want to continue? [y/N]:')
     if not any(interaction.lower() == f for f in ['yes', 'y', '1', 'ye', 'ja']):
       print ('Aborting JSON dump.')
-      return False
+      return
   print('Generating »pae_plddt.json« in the output directory for further usage. Remember to also keep »features.pkl«.')
   with open(os.path.join(out_dir, 'pae_plddt.json'), 'w') as f:
     json.dump(pae_plddt_per_model, f, separators = (',', ':'), default=convert)
-  return True
 
 def add_ranking(pae_plddt_per_model, ranking_path):
   with open(ranking_path) as handle:
