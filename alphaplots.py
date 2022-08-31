@@ -57,7 +57,7 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
         try:
             d = pickle.load(open(name, 'rb'))
         except BaseException:
-            log.warning(f'Encountered error while loading »{name}«. Maybe it is unfinished. Skipping.')
+            log.error(f'Encountered error while loading »{name}«. Maybe it is unfinished. Skipping.')
             continue
         out[name] = {'short_name': shortname, 'plddt': d['plddt']}
         if 'predicted_aligned_error' in d:
@@ -110,8 +110,11 @@ def add_ranking(pae_plddt_per_model, ranking_path):
 
 def remove_pkl(pkl_list, input_dir, yes):
     if not yes:
-        log.info('The following files will be deleted:', end='\n\n')
-        log.info(*pkl_list, sep='\n', end='\n\n')
+        log.info('The following files will be deleted:')
+        log.info('')
+        for pkl in pkl_list:
+            log.info(f'»{pkl}«')
+        log.info('')
         if not os.path.exists(os.path.join(input_dir, 'pae_plddt.json')):
             log.warning('It is strongly recommended to keep a JSON dump of the Pickle data for later inspection. There was no file »pae_plddt.json« found in the input directory.')
             log.warning('If you renamed or moved it, you can ignore this warning.')
@@ -209,7 +212,7 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format = '%(asctime)s [%(levelname)-8s] %(message)s'
+    format = '%(asctime)s [%(levelname)-7s] %(message)s'
 
     FORMATS = {
         logging.DEBUG: grey + format + reset,
@@ -226,6 +229,7 @@ class CustomFormatter(logging.Formatter):
 
 
 def main():
+    global log
     log = logging.getLogger(__name__)
     log.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
@@ -266,7 +270,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.input_dir):
-        log.error(f'»{os.path.abspath(args.input_dir)}« was not found.')
+        log.error(f'»{os.path.abspath(args.input_dir)}« was not found. Aborting')
         sys.exit(1)
 
     feature_path = os.path.join(args.input_dir, 'features.pkl')
