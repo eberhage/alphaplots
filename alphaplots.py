@@ -206,14 +206,12 @@ def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
 
 
 class CustomFormatter(logging.Formatter):
-
     grey = "\x1b[38;20m"
     yellow = "\x1b[33;20m"
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
     format = '%(asctime)s [%(levelname)-7s] %(message)s'
-
     FORMATS = {
         logging.DEBUG: grey + format + reset,
         logging.INFO: grey + format + reset,
@@ -237,36 +235,32 @@ def main():
     ch.setFormatter(CustomFormatter())
     log.addHandler(ch)
 
-    parser = argparse.ArgumentParser(description='This script will generate plots containing the MSA, pLDDT distribution and \
-        Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
+    parser = argparse.ArgumentParser(add_help=False, description='This script will generate plots containing the MSA, pLDDT \
+      distribution and Predicted Alignment Error (PAE) of a given AlphaFold output using the Pickle files (.pkl).')
     required = parser.add_argument_group('required arguments')
-    rmpklgroup = parser.add_mutually_exclusive_group()
+    optional = parser.add_argument_group('optional arguments')
+    rmpklgroup = optional.add_mutually_exclusive_group()
     required.add_argument('-i', '--input_dir', dest='input_dir', metavar='<input_dir>',
                           required=True, help='Relative or absolute path to the input directory (AlphaFold output)')
-    parser.add_argument('-o', '--output_dir', dest='output_dir', default='', metavar='<output_dir>',
-                        help='Destination folder where files are generated')
-    parser.add_argument('-n', '--name', dest='name', default='', metavar='<prefix>',
-                        help='Add custom name as prefix to your plots')
-    parser.add_argument('-m', '--models', dest='models', default=0, type=int, metavar='<n>',
-                        help='Limit the inspected pickles to n models')
-    parser.add_argument('--jsondump', action='store_true',
-                        help='Dump all relevant PAE and pLDDT information as human readable JSON file')
+    optional.add_argument('-o', '--output_dir', dest='output_dir', default='', metavar='<output_dir>',
+                          help='Destination folder where files are generated')
+    optional.add_argument('-n', '--name', dest='name', default='', metavar='<prefix>',
+                          help='Add custom name as prefix to your plots')
+    optional.add_argument('-m', '--models', dest='models', default=0, type=int, metavar='<n>',
+                          help='Limit the inspected pickles to n models')
+    optional.add_argument('--jsondump', action='store_true',
+                          help='Dump all relevant PAE and pLDDT information as human readable JSON file')
     rmpklgroup.add_argument('--jsonload', dest='json', default='', metavar='<file>',
                             help='JSON file in the input directory to be read instead of pkl files')
     rmpklgroup.add_argument('--rmpkl', action='store_true',
                             help='Remove all model pkl files. Cannot be used with jsonload.')
-    parser.add_argument('--noplot', action='store_true',
-                        help='Skip the plotting. Only makes sense with jsondump.')
-    parser.add_argument('--yes', action='store_true',
-                        help='Auto-answer every question with »Yes«. Use with caution.')
-    parser.add_argument('-v', '--version', action='version',
-                        version='%(prog)s (' + __version__ + ') ' + ' by ' + __author__)
-    groups_order = {
-        'positional arguments': 0,
-        'required arguments': 1,
-        'optional arguments': 2
-    }
-    parser._action_groups.sort(key=lambda g: groups_order[g.title])
+    optional.add_argument('--noplot', action='store_true',
+                          help='Skip the plotting. Only makes sense with jsondump.')
+    optional.add_argument('--yes', action='store_true',
+                          help='Auto-answer every question with »Yes«. Use with caution.')
+    optional.add_argument('-v', '--version', action='version',
+                          version='%(prog)s (' + __version__ + ') ' + ' by ' + __author__)
+    optional.add_argument('-h', '--help', action='help', help='show this help message and exit')
     args = parser.parse_args()
 
     if not os.path.exists(args.input_dir):
