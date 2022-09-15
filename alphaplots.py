@@ -7,9 +7,8 @@ import sys
 try:
     from matplotlib import pyplot as plt
 except ModuleNotFoundError:
-    log.error('Module »matplotlib« is not installed.')
-    log.info('Please try »python3 -m pip install matplotlib«.')
-    sys.exit(1)
+    print('Module »matplotlib« is not installed.')
+    sys.exit('Please try »python3 -m pip install matplotlib«.')
 import numpy as np
 import argparse
 import pickle
@@ -56,7 +55,7 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
         log.info(f'Loading »{name}«.')
         try:
             d = pickle.load(open(name, 'rb'))
-        except BaseException:
+        except pickle.UnpicklingError:
             log.error(f'Encountered error while loading »{name}«. Maybe it is unfinished. Skipping.')
             continue
         out[name] = {'short_name': shortname, 'plddt': d['plddt']}
@@ -128,7 +127,7 @@ def remove_pkl(pkl_list, input_dir, yes):
 
 
 def generate_output_images(feature_dict, out_dir, name, pae_plddt_per_model):
-    log.info(f'Generating plots in »{out_dir}.«')
+    log.info(f'Generating plots in »{out_dir}«.')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     msa = feature_dict['msa']
@@ -211,7 +210,8 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format = '%(asctime)s [%(levelname)-7s] %(message)s'
+    #format = '%(asctime)s [%(levelname)-7s] %(message)s'
+    format = '%(asctime)s :: %(message)s'
     FORMATS = {
         logging.DEBUG: grey + format + reset,
         logging.INFO: grey + format + reset,
