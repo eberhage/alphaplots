@@ -1,4 +1,4 @@
-__version_info__ = (1, 2, 5)
+__version_info__ = (1, 2, 6)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -49,6 +49,7 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
     for i, name in enumerate(model_names):
         shortname = (name.replace(os.path.join(input_dir, 'result_'), '')
                          .replace('multimer_v2_', '')
+                         .replace('multimer_v3_', '')
                          .replace('ptm_', '')
                          .replace('pred_', '')
                          .replace('.pkl', ''))
