@@ -18,11 +18,15 @@ import logging
 
 def convert(x):
     if hasattr(x, "tolist"):  # numpy arrays have this
-        if x.dtype == np.float32:
-            # need to convert here because np.round doesnt like float32
-            return np.round(x.astype(np.float64), 1).tolist()
+        if isinstance(x, np.ndarray) and x.ndim >= 1:  # Check if array is multidimensional
+            # Rounding with precision 1
+            if x.dtype == np.float32:
+                return np.round(x.astype(np.float64), 1).tolist()
+            else:
+                return np.round(x, 1).tolist()
         else:
-            return np.round(x, 1).tolist()
+            # Rounding for scalars (0-dimensional arrays) with precision 5
+            return np.round(x, 5).tolist()
     raise TypeError(x)
 
 
