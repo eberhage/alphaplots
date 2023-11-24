@@ -1,4 +1,4 @@
-__version_info__ = (1, 2, 6)
+__version_info__ = (1, 2, 7)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
@@ -62,6 +62,10 @@ def get_pae_plddt_from_pkl(model_names, input_dir):
         out[name] = {'short_name': shortname, 'plddt': d['plddt']}
         if 'predicted_aligned_error' in d:
             out[name]['pae'] = d['predicted_aligned_error']
+        if 'ptm' in d:
+            out[name]['ptm'] = d['ptm']
+        if 'iptm' in d:
+            out[name]['iptm'] = d['iptm']
     if out:
         return out
     else:
