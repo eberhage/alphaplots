@@ -1,14 +1,16 @@
-__version_info__ = (1, 2, 7)
+__version_info__ = (1, 2, 8)
 __version__ = '.'.join(map(str, __version_info__))
 __author__ = 'Jan Eberhage, Institute for Biophysical Chemistry, Hannover Medical School (eberhage.jan@mh-hannover.de)'
 
 import os
 import sys
 try:
-    from matplotlib import pyplot as plt
+    import matplotlib
 except ModuleNotFoundError:
     print('Module »matplotlib« is not installed.')
     sys.exit('Please try »python3 -m pip install matplotlib«.')
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 import numpy as np
 import argparse
 import pickle
@@ -18,13 +20,17 @@ import logging
 
 def convert(x):
     if hasattr(x, "tolist"):  # numpy arrays have this
-        if x.dtype == np.float32:
-            # need to convert here because np.round doesnt like float32
-            return np.round(x.astype(np.float64), 1).tolist()
+        if isinstance(x, np.ndarray) and x.ndim >= 1:  # Check if array is multidimensional
+            # Rounding with precision 1
+            if x.dtype == np.float32:
+                # need to convert here because np.round doesnt like float32
+                return np.round(x.astype(np.float64), 1).tolist()
+            else:
+                return np.round(x, 1).tolist()
         else:
-            return np.round(x, 1).tolist()
+            # Rounding for scalars (0-dimensional arrays) with full precision
+            return x.tolist()
     raise TypeError(x)
-
 
 def find_pkl_models(input_dir, model_num=0):
     model_names = [entry.path for entry in os.scandir(input_dir) if entry.is_file(
