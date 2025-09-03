@@ -1,5 +1,7 @@
 # alphaplots.py
-This script will scan a folder and use the Pickle (.pkl) files of an AlphaFold output to generate the MSA, the per-AA plDDT distribution and (for each model) a predicted alignment error (PAE) plot.
+This script will scan a folder and use the Pickle (.pkl) files of an AlphaFold 2 output to generate the MSA, the per-AA plDDT distribution and (for each model) a predicted alignment error (PAE) plot.
+
+See [alphaplots3](https://github.com/eberhage/alphaplots3) for the AlphaFold 3 version.
 
 ## Example Usage
 Make plots from Pickle files. That's it.
